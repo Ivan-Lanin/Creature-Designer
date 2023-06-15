@@ -15,8 +15,11 @@ public class SelectiveEvolution : MonoBehaviour
     private int secondDesiredTraitN = 1;
     private int secondDesiredTraitValue = 50;
     private int[,] desiredTraits = new int[2,2];
-    private int selectedCreature = 0;
-    [SerializeField] private TextMeshProUGUI selectedCreatureText;
+    private int[] selectedCreaturesIndex = new int[] { 0, 0 };
+    private int nowSelecting = 0;
+    [SerializeField] private TextMeshProUGUI selectedCreature1Text;
+    [SerializeField] private TextMeshProUGUI selectedCreature2Text;
+    [SerializeField] private TextMeshProUGUI selectCreatureText;
 
 
     void Start()
@@ -25,24 +28,37 @@ public class SelectiveEvolution : MonoBehaviour
         desiredTraits[0,1] = firstDesiredTraitValue;
         desiredTraits[1,0] = secondDesiredTraitN;
         desiredTraits[1,1] = secondDesiredTraitValue;
-        NextGeneration(starterCreature);
+        NextGeneration(starterCreature, starterCreature);
     }
 
     // Update is called once per frame
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space)) {
-            NextGeneration(currentGeneration[selectedCreature]);
+            NextGeneration(currentGeneration[selectedCreaturesIndex[0]], currentGeneration[selectedCreaturesIndex[1]]);
         }
     }
 
-    private void NextGeneration(int[] parent) {
+    private void NextGeneration(int[] parent1, int[] parent2) {
         currentGeneration = new List<int[]>();
-        for (int i = 0; i < 5; i++) {
+        for (int childN = 0; childN < 5; childN++) {
             int[] child = new int[] {0, 0, 0, 0};
 
+            // random mix of parents traits
+            int[] dominantTraits = new int[] { 0, 0, 0, 0 };
+            for (int i = 0; i < 4; i++)
+            {
+                if (Random.Range(0, 1) == 0) {
+                    dominantTraits[i] = parent1[i];
+                }
+                else {
+                    dominantTraits[i] = parent2[i];
+                }
+            }
+
+            // mutate
             int traitN = 0;
-            foreach (int trait in parent) {
+            foreach (int trait in dominantTraits) {
                 child[traitN] = trait + Random.Range(-10, 10);
                 if (child[traitN] < 0) {
                     child[traitN] = 0;
@@ -52,6 +68,7 @@ public class SelectiveEvolution : MonoBehaviour
             currentGeneration.Add(child);
         }
         PrintGeneration(currentGeneration);
+        nowSelecting = 0;
     }
 
     private string PrintTraits(int[] creature) { 
@@ -84,7 +101,16 @@ public class SelectiveEvolution : MonoBehaviour
     }
 
     public void SelectCreature(int creatureIndex) {
-        selectedCreature = creatureIndex;
-        selectedCreatureText.text = "Selected creature: " + creatureIndex;
+        selectedCreaturesIndex[nowSelecting] = creatureIndex;
+        if (nowSelecting == 0) {
+            selectedCreature1Text.text = "Selected creature: " + (creatureIndex + 1);
+        } else {
+            selectedCreature2Text.text = "Selected creature: " + (creatureIndex + 1);
+        }
+        nowSelecting++;
+        if (nowSelecting > 1) {
+            nowSelecting = 0;
+        }
+        selectCreatureText.text = "Select creature " + (nowSelecting + 1);
     }
 }
